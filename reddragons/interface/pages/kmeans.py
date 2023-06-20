@@ -241,24 +241,38 @@ global kmeans_colours_buttons
 def get_cluster_means(self):
     img = self.imagem_HSV
     mask = cv2.inRange(img,(0,0,0), (180,30,133))
-    mask= cv2.bitwise_not(mask)
-    img=cv2.bitwise_and(img, img, mask=mask)
-    Z = img.reshape((-1, 3))
-    Z = np.float32(Z)
+    mask = cv2.bitwise_not(mask)
+    img = cv2.bitwise_and(img, img, mask=mask)
+
+    # amostras == Z
+    amostras = img.reshape((-1, 3))
+    amostras = np.float32(amostras)
+
+    # TERM_CRITERIA_EPS + TERM_CRITERIA_MAX_ITER: para a iteração quando acurácia
+    # especifica, epsilon, é atingida OU após determinado numero de iterações
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+    
+    # Numero de Clusters
     K = 60
-    ret, label, center = cv2.kmeans(Z, K, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+    
+    # ret: soma das distâncias ao quadrado de cada ponto em relação ao centro
+    # label: é um vetor de rótulo com cada elemento marcado '0', '1', ...
+    # center: o centro de um cluster é a média aritmética de todos os pontos desse cluster
+    ret, label, center = cv2.kmeans(amostras, K, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
     center = np.uint8(center)
+
+    
     global kmeans_colors_references
-    kmeans_colors_references=self.k_ref
+    kmeans_colors_references = self.k_ref
+
     # Now convert back into uint8, and make original image
     default_centers = []
-    width= self.imagem_HSV.shape[1]
+    width = self.imagem_HSV.shape[1]
     for aux_pos in self.k_ref_pos:
-        pos=width*aux_pos[1]+aux_pos[0]
+        pos = width*aux_pos[1] + aux_pos[0]
         default_centers.append(int(label[pos]))
     index = 0
-    center_colors=[]
+    center_colors = []
     center_no_cut = copy.deepcopy(center)
     for i in center:
         if index not in default_centers:
@@ -396,6 +410,35 @@ def drawReferences(self):
     bytesPerLine = 3 * width
     blank_image = np.zeros((height, width, 3), np.uint8)
 
+    for i in range (6):
+        blank_image[:, :] = (self.k_ref[i][0], self.k_ref[i][1], self.k_ref[i][2])
+        blank_image = cv2.cvtColor(blank_image, cv2.COLOR_HSV2RGB)
+        _qImage = QImage(blank_image, blank_image.shape[1], blank_image.shape[0], bytesPerLine, QImage.Format_RGB888)
+        _qPixmap = QPixmap.fromImage(_qImage)
+
+        #Note que o Switch Case em python foi implementado na versão 3.10, 
+        #caso utiliza um interpretador mais antigo é necessário mudar o código abaixo
+        #Por esse motivo optamos por utilizar if-else
+        if i == 0:
+            self.QT_ref_bola.setPixmap(_qPixmap)
+
+        elif i == 1:
+            self.QT_ref_principal.setPixmap(_qPixmap)
+
+        elif i == 2:
+            self.QT_ref_goleiro.setPixmap(_qPixmap)
+
+        elif i == 3:
+            self.QT_ref_zagueiro.setPixmap(_qPixmap)
+
+        elif i == 4:
+            self.QT_ref_atacante.setPixmap(_qPixmap)
+
+        elif i == 5:
+            self.QT_ref_adversario.setPixmap(_qPixmap)
+
+
+"""
     blank_image[:, :] = (self.k_ref[0][0], self.k_ref[0][1], self.k_ref[0][2])
     blank_image = cv2.cvtColor(blank_image, cv2.COLOR_HSV2RGB)
     _qImage = QImage(blank_image, blank_image.shape[1], blank_image.shape[0], bytesPerLine, QImage.Format_RGB888)
@@ -414,7 +457,7 @@ def drawReferences(self):
     _qPixmap = QPixmap.fromImage(_qImage)
     self.QT_ref_goleiro.setPixmap(_qPixmap)
 
-    blank_image[:, :] = (self.k_ref[3][0], self.k_ref[3][1], self.k_ref[3][2])
+    blank_image[:, :] =fin (self.k_ref[3][0], self.k_ref[3][1], self.k_ref[3][2])
     blank_image = cv2.cvtColor(blank_image, cv2.COLOR_HSV2RGB)
     _qImage = QImage(blank_image, blank_image.shape[1], blank_image.shape[0], bytesPerLine, QImage.Format_RGB888)
     _qPixmap = QPixmap.fromImage(_qImage)
@@ -431,3 +474,4 @@ def drawReferences(self):
     _qImage = QImage(blank_image, blank_image.shape[1], blank_image.shape[0], bytesPerLine, QImage.Format_RGB888)
     _qPixmap = QPixmap.fromImage(_qImage)
     self.QT_ref_adversario.setPixmap(_qPixmap)
+"""
